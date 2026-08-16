@@ -11,10 +11,20 @@ const app = express();
 
 await connectToDatabase()
 
+const allowedOrigins = process.env.ORIGINS
+    .split(",")
+    .map(origin => origin.trim());
+
 app.use(cors({
-    origin: /^http:\/\/localhost:\d+$/,
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     credentials: true
-}))
+}));
 app.use(cookieParser())
 app.use(express.json())
 
@@ -30,6 +40,6 @@ app.use((err, _req, res, _next)=>{
 
 const port = process.env.PORT || 3000;
 
-app.listen(port, ()=>{
-    console.log(`Server is running at http://localhost:${port}`)
-})
+app.listen(port, "0.0.0.0", () => {
+    console.log(`Server is running on port ${port}`);
+});
